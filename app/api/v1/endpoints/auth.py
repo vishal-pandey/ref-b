@@ -4,8 +4,9 @@ from datetime import timedelta
 
 from app import crud, schemas, models
 from app.core import security
-from app.database import SessionLocal, engine
+from app.database import SessionLocal
 from app.core.config import settings
+from app.services.email_service import send_otp_email
 
 # models.Base.metadata.create_all(bind=engine) # This should be handled by Alembic migrations
 
@@ -34,13 +35,16 @@ async def request_otp(
     
     identifier_to_use: str
     user_create_data = {}
+    is_email_request = False # Flag to identify if the request is via email
 
     if email:
         identifier_to_use = email.lower()
         user_create_data["email"] = email
+        is_email_request = True # Flag for email
     elif mobile:
-        identifier_to_use = mobile # mobile is already a string, ensure it's stored as is or normalized if needed
+        identifier_to_use = mobile
         user_create_data["mobile_number"] = mobile
+        is_email_request = False # Flag for mobile
     else:
         # This case should be prevented by Pydantic's model_validator in OTPRequest schema
         raise HTTPException(status_code=400, detail="Email or mobile number must be provided.")
@@ -57,9 +61,27 @@ async def request_otp(
     # Store OTP
     crud.create_otp(db=db, user_id=user.id, otp_code=otp_code, expires_delta=otp_expires_delta, identifier=identifier_to_use)
     
-    # In a real application, you would send the OTP via email/SMS here.
-    print(f"Generated OTP for {identifier_to_use}: {otp_code}") # Log OTP for testing
-    return {"msg": f"OTP sent to {identifier_to_use}. It is: {otp_code}"} # Remove OTP from response in production
+    response_msg = f"OTP generation process initiated for {identifier_to_use}."
+
+    if is_email_request and email: # Send email if it was an email request
+        email_sent = await send_otp_email(email_to=email, otp_code=otp_code)
+        if email_sent:
+            response_msg = f"OTP has been sent to {email}."
+            print(f"OTP email successfully sent to {email} (OTP: {otp_code})") # Keep for logging during dev
+        else:
+            response_msg = f"OTP generated for {email}, but failed to send email. Please check server logs. (OTP: {otp_code})" # Keep OTP for testing if email fails
+            print(f"Failed to send OTP email to {email} (OTP: {otp_code})") # Keep for logging
+    elif not is_email_request and mobile:
+        # Placeholder for SMS sending logic if you add it later
+        print(f"Generated OTP for {identifier_to_use} (mobile): {otp_code}") # Log OTP for testing
+        # In production, do not include OTP in response if sent via SMS
+        response_msg = f"OTP sent to {identifier_to_use}. (OTP for testing: {otp_code})"
+    else:
+        # Fallback, should not happen if logic is correct
+        print(f"Generated OTP for {identifier_to_use}: {otp_code}")
+        response_msg = f"OTP generated for {identifier_to_use}. (OTP for testing: {otp_code})"
+
+    return {"msg": response_msg}
 
 
 @router.post("/verify-otp", response_model=schemas.Token)

@@ -1,33 +1,35 @@
 # app/api/v1/endpoints/jobs.py
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import List, Optional, Annotated # Added Annotated
 import uuid
 
 from app import crud, schemas, models # Updated imports
-from app.database import get_db # Updated import
+# from app.database import get_db # Updated import - get_db is now in deps
+from app.api import deps # Import deps
 
 router = APIRouter()
 
 @router.post("/", response_model=schemas.JobPostInDB, status_code=status.HTTP_201_CREATED)
 def create_job_posting(
     job_in: schemas.JobPostCreate,
-    db: Session = Depends(get_db)
+    db: Annotated[Session, Depends(deps.get_db)], 
+    current_user: Annotated[models.User, Depends(deps.get_current_active_user)] 
 ):
     """
-    Create new job posting.
+    Create new job posting. Requires authentication.
     """
     return crud.create_job(db=db, job=job_in)
 
 @router.get("/", response_model=List[schemas.JobPostInDB])
 def read_job_postings(
+    db: Annotated[Session, Depends(deps.get_db)], # Moved db parameter up
     skip: int = 0,
     limit: int = 100,
-    RoleName: Optional[str] = None, # Added search parameters
+    RoleName: Optional[str] = None, 
     CompanyName: Optional[str] = None,
     Location: Optional[str] = None,
-    DepartmentName: Optional[str] = None,
-    db: Session = Depends(get_db)
+    DepartmentName: Optional[str] = None
 ):
     """
     Retrieve all job postings, with pagination and search filters.
@@ -44,7 +46,7 @@ def read_job_postings(
 @router.get("/{job_id}", response_model=schemas.JobPostInDB)
 def read_job_posting(
     job_id: uuid.UUID,
-    db: Session = Depends(get_db)
+    db: Annotated[Session, Depends(deps.get_db)] 
 ):
     """
     Get a specific job posting by ID.
@@ -58,10 +60,11 @@ def read_job_posting(
 def update_single_job_posting(
     job_id: uuid.UUID,
     job_in: schemas.JobPostUpdate,
-    db: Session = Depends(get_db)
+    db: Annotated[Session, Depends(deps.get_db)], 
+    current_user: Annotated[models.User, Depends(deps.get_current_active_user)] 
 ):
     """
-    Update a specific job posting.
+    Update a specific job posting. Requires authentication.
     """
     db_job = crud.get_job(db, job_id=job_id)
     if db_job is None:
@@ -72,18 +75,19 @@ def update_single_job_posting(
 @router.delete("/{job_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_single_job_posting(
     job_id: uuid.UUID,
-    db: Session = Depends(get_db)
+    db: Annotated[Session, Depends(deps.get_db)], 
+    current_user: Annotated[models.User, Depends(deps.get_current_active_user)] 
 ):
     """
-    Delete a specific job posting.
+    Delete a specific job posting. Requires authentication.
     """
-    db_job = crud.delete_job(db, job_id=job_id)
-    if db_job is None:
+    db_job_deleted = crud.delete_job(db, job_id=job_id) 
+    if db_job_deleted is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
     return
 
 @router.get("/suggestions/role-names", response_model=schemas.SuggestionList)
-async def get_role_name_suggestions(db: Session = Depends(get_db)):
+async def get_role_name_suggestions(db: Annotated[Session, Depends(deps.get_db)]):
     """
     Get distinct role names for search suggestions.
     """
@@ -91,7 +95,7 @@ async def get_role_name_suggestions(db: Session = Depends(get_db)):
     return schemas.SuggestionList(suggestions=suggestions)
 
 @router.get("/suggestions/company-names", response_model=schemas.SuggestionList)
-async def get_company_name_suggestions(db: Session = Depends(get_db)):
+async def get_company_name_suggestions(db: Annotated[Session, Depends(deps.get_db)]):
     """
     Get distinct company names for search suggestions.
     """
@@ -99,7 +103,7 @@ async def get_company_name_suggestions(db: Session = Depends(get_db)):
     return schemas.SuggestionList(suggestions=suggestions)
 
 @router.get("/suggestions/locations", response_model=schemas.SuggestionList)
-async def get_location_suggestions(db: Session = Depends(get_db)):
+async def get_location_suggestions(db: Annotated[Session, Depends(deps.get_db)]):
     """
     Get distinct locations for search suggestions.
     """
@@ -107,7 +111,7 @@ async def get_location_suggestions(db: Session = Depends(get_db)):
     return schemas.SuggestionList(suggestions=suggestions)
 
 @router.get("/suggestions/department-names", response_model=schemas.SuggestionList)
-async def get_department_name_suggestions(db: Session = Depends(get_db)):
+async def get_department_name_suggestions(db: Annotated[Session, Depends(deps.get_db)]):
     """
     Get distinct department names for search suggestions.
     """

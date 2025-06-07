@@ -1,6 +1,7 @@
 # app/core/config.py
 from pydantic_settings import BaseSettings
 import secrets # For generating a default secret key
+from typing import Optional # Import Optional
 
 class Settings(BaseSettings):
     DATABASE_URL: str = "postgresql://referral_user:referral_password@localhost:5432/referral_network"
@@ -15,6 +16,10 @@ class Settings(BaseSettings):
     OTP_EXPIRE_MINUTES: int = 5
     OTP_LENGTH: int = 6
 
+    # Brevo (Sendinblue) Email API Settings
+    BREVO_API_KEY: Optional[str] = None
+    BREVO_SENDER_EMAIL: str = "no-reply@hirel.com" # Made non-optional with a default
+    BREVO_SENDER_NAME: str = "Hirel Platform"   # Made non-optional with a default
 
     class Config:
         env_file = ".env"

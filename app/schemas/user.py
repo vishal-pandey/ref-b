@@ -25,11 +25,11 @@ class UserUpdate(UserBase):
     is_admin: Optional[bool] = None
 
 class UserInDBBase(UserBase):
-    id: uuid.UUID
+    id: int # Changed from uuid.UUID to int
     is_active: bool
     is_admin: bool
-    createdAt: datetime
-    updatedAt: datetime
+    created_at: datetime # Changed from createdAt
+    updated_at: datetime # Changed from updatedAt
 
     class Config:
         from_attributes = True
@@ -69,7 +69,7 @@ class Token(BaseModel):
     token_type: str = "bearer"
 
 class TokenPayload(BaseModel):
-    sub: Union[uuid.UUID, str] # Subject of the token (user_id)
+    sub: Union[int, str] # Subject of the token (user_id), changed uuid.UUID to int
     exp: Optional[datetime] = None
 
 class Msg(BaseModel):
