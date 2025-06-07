@@ -10,7 +10,7 @@ from app.core import security
 from app.core.config import settings
 from app.crud import crud_user
 from app.models.user import User
-from app.schemas.user import TokenPayload, User as UserSchema # Added UserSchema
+from app.schemas.user import TokenPayload # Removed User as UserSchema is not used
 from app.database import SessionLocal
 
 # Changed from OAuth2PasswordBearer to HTTPBearer
@@ -33,9 +33,8 @@ def get_db() -> Generator:
 
 async def get_current_user(
     db: Annotated[Session, Depends(get_db)], 
-    # token: Annotated[str, Depends(reusable_oauth2)] # Changed
     auth_credentials: Annotated[HTTPAuthorizationCredentials, Depends(reusable_oauth2)] # Changed
-) -> UserSchema: # Return type changed to UserSchema
+) -> User: # Return type changed to User (SQLAlchemy model)
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -63,18 +62,18 @@ async def get_current_user(
     user = crud_user.get_user(db, user_id=user_id) # type: ignore
     if user is None:
         raise credentials_exception
-    return UserSchema.model_validate(user) # Validate and return as UserSchema
+    return user # Return SQLAlchemy model instance
 
 async def get_current_active_user(
-    current_user: Annotated[UserSchema, Depends(get_current_user)] # Type hint changed to UserSchema
-) -> UserSchema: # Return type changed to UserSchema
+    current_user: Annotated[User, Depends(get_current_user)] # Type hint changed to User
+) -> User: # Return type changed to User
     if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
 
 async def get_current_active_admin(
-    current_user: Annotated[UserSchema, Depends(get_current_active_user)] # Type hint changed to UserSchema
-) -> UserSchema: # Return type changed to UserSchema
+    current_user: Annotated[User, Depends(get_current_active_user)] # Type hint changed to User
+) -> User: # Return type changed to User
     if not current_user.is_admin:
         raise HTTPException(
             status_code=403, detail="The user doesn't have enough privileges"

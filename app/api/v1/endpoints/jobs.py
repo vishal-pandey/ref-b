@@ -23,7 +23,8 @@ def create_job_posting(
 
 @router.get("/", response_model=List[schemas.JobPostInDB])
 def read_job_postings(
-    db: Annotated[Session, Depends(deps.get_db)], # Moved db parameter up
+    db: Annotated[Session, Depends(deps.get_db)], 
+    current_user: Annotated[models.User, Depends(deps.get_current_active_user)], # Added dependency
     skip: int = 0,
     limit: int = 100,
     RoleName: Optional[str] = None, 
@@ -32,7 +33,7 @@ def read_job_postings(
     DepartmentName: Optional[str] = None
 ):
     """
-    Retrieve all job postings, with pagination and search filters.
+    Retrieve all job postings, with pagination and search filters. Requires authentication.
     """
     search_params = schemas.JobSearch(
         RoleName=RoleName,
@@ -46,10 +47,11 @@ def read_job_postings(
 @router.get("/{job_id}", response_model=schemas.JobPostInDB)
 def read_job_posting(
     job_id: uuid.UUID,
-    db: Annotated[Session, Depends(deps.get_db)] 
+    db: Annotated[Session, Depends(deps.get_db)],
+    current_user: Annotated[models.User, Depends(deps.get_current_active_user)] # Added dependency
 ):
     """
-    Get a specific job posting by ID.
+    Get a specific job posting by ID. Requires authentication.
     """
     db_job = crud.get_job(db, job_id=job_id)
     if db_job is None:
@@ -87,33 +89,45 @@ def delete_single_job_posting(
     return
 
 @router.get("/suggestions/role-names", response_model=schemas.SuggestionList)
-async def get_role_name_suggestions(db: Annotated[Session, Depends(deps.get_db)]):
+async def get_role_name_suggestions(
+    db: Annotated[Session, Depends(deps.get_db)],
+    current_user: Annotated[models.User, Depends(deps.get_current_active_user)] # Added dependency
+):
     """
-    Get distinct role names for search suggestions.
+    Get distinct role names for search suggestions. Requires authentication.
     """
     suggestions = crud.get_distinct_job_attributes(db, "RoleName")
     return schemas.SuggestionList(suggestions=suggestions)
 
 @router.get("/suggestions/company-names", response_model=schemas.SuggestionList)
-async def get_company_name_suggestions(db: Annotated[Session, Depends(deps.get_db)]):
+async def get_company_name_suggestions(
+    db: Annotated[Session, Depends(deps.get_db)],
+    current_user: Annotated[models.User, Depends(deps.get_current_active_user)] # Added dependency
+):
     """
-    Get distinct company names for search suggestions.
+    Get distinct company names for search suggestions. Requires authentication.
     """
     suggestions = crud.get_distinct_job_attributes(db, "CompanyName")
     return schemas.SuggestionList(suggestions=suggestions)
 
 @router.get("/suggestions/locations", response_model=schemas.SuggestionList)
-async def get_location_suggestions(db: Annotated[Session, Depends(deps.get_db)]):
+async def get_location_suggestions(
+    db: Annotated[Session, Depends(deps.get_db)],
+    current_user: Annotated[models.User, Depends(deps.get_current_active_user)] # Added dependency
+):
     """
-    Get distinct locations for search suggestions.
+    Get distinct locations for search suggestions. Requires authentication.
     """
     suggestions = crud.get_distinct_job_attributes(db, "Location")
     return schemas.SuggestionList(suggestions=suggestions)
 
 @router.get("/suggestions/department-names", response_model=schemas.SuggestionList)
-async def get_department_name_suggestions(db: Annotated[Session, Depends(deps.get_db)]):
+async def get_department_name_suggestions(
+    db: Annotated[Session, Depends(deps.get_db)],
+    current_user: Annotated[models.User, Depends(deps.get_current_active_user)] # Added dependency
+):
     """
-    Get distinct department names for search suggestions.
+    Get distinct department names for search suggestions. Requires authentication.
     """
     suggestions = crud.get_distinct_job_attributes(db, "DepartmentName")
     return schemas.SuggestionList(suggestions=suggestions)

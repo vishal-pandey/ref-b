@@ -10,6 +10,7 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True) # Changed to Integer
+    full_name = Column(String, index=True, nullable=True) # Added full_name
     email = Column(String, unique=True, index=True, nullable=True)
     mobile_number = Column(String, unique=True, index=True, nullable=True)
     
