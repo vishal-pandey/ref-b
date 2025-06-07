@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+pydantic
+python-jose[cryptography] # This includes python-jose
+passlib[bcrypt]
+python-multipart
+pydantic-settings
+sqlalchemy
+alembic
+psycopg2-binary
+requests # Added for testing script

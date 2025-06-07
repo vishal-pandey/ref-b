@@ -1,0 +1,7 @@
+venv/
+__pycache__/
+*.pyc
+.env
+docker-compose.yml
+.venv
+postgres_data
