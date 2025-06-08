@@ -9,3 +9,5 @@ sqlalchemy
 alembic
 psycopg2-binary
 requests # Added for testing script
+pydantic[email]
+httpx
