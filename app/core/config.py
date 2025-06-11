@@ -18,8 +18,8 @@ class Settings(BaseSettings):
 
     # Brevo (Sendinblue) Email API Settings
     BREVO_API_KEY: Optional[str] = None
-    BREVO_SENDER_EMAIL: str = "no-reply@hirel.com" # Made non-optional with a default
-    BREVO_SENDER_NAME: str = "Hirel Platform"   # Made non-optional with a default
+    BREVO_SENDER_EMAIL: str = "no-reply@referralnetwork.in" # Made non-optional with a default
+    BREVO_SENDER_NAME: str = "The Referral Network"   # Made non-optional with a default
 
     class Config:
         env_file = ".env"

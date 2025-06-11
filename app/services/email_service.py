@@ -68,17 +68,17 @@ async def send_otp_email(
     otp_code: str
 ) -> bool:
     """Constructs and sends an OTP email."""
-    subject = f"Your OTP for Hirel Platform: {otp_code}"
+    subject = f"Your OTP for The Referral Network: {otp_code}"
     # You can create a more sophisticated HTML template for the OTP email
     html_content = f"""
     <html>
         <head></head>
         <body>
             <p>Hello,</p>
-            <p>Your One-Time Password (OTP) for accessing Hirel is: <strong>{otp_code}</strong></p>
+            <p>Your One-Time Password (OTP) for accessing The Referral Network is: <strong>{otp_code}</strong></p>
             <p>This OTP is valid for {settings.OTP_EXPIRE_MINUTES} minutes.</p>
             <p>If you did not request this OTP, please ignore this email.</p>
-            <p>Thanks,<br>The Hirel Team</p>
+            <p>Thanks,<br>The Referral Network Team</p>
         </body>
     </html>
     """
