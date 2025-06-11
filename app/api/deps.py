@@ -1,5 +1,5 @@
 # app/api/deps.py
-from typing import Generator, Annotated
+from typing import Generator, Annotated, Optional
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials # Added
@@ -20,6 +20,13 @@ reusable_oauth2 = HTTPBearer(
     auto_error=True
 )
 
+# New dependency for the static bearer token
+automation_bearer_token_scheme = HTTPBearer(
+    bearerFormat="Static",
+    scheme_name="Bearer",
+    auto_error=False # We will handle the error manually to allow JWT to proceed if this fails
+)
+
 # The tokenUrl was for OAuth2PasswordBearer documentation, 
 # with HTTPBearer, the user gets the token from /auth/verify-otp 
 # and then uses it.
@@ -33,13 +40,48 @@ def get_db() -> Generator:
 
 async def get_current_user(
     db: Annotated[Session, Depends(get_db)], 
-    auth_credentials: Annotated[HTTPAuthorizationCredentials, Depends(reusable_oauth2)] # Changed
+    auth_credentials: Annotated[Optional[HTTPAuthorizationCredentials], Depends(reusable_oauth2)], # Made optional
+    automation_token_credentials: Annotated[Optional[HTTPAuthorizationCredentials], Depends(automation_bearer_token_scheme)] # Added automation token
 ) -> User: # Return type changed to User (SQLAlchemy model)
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"}, # This header is important
     )
+
+    # Try automation token first
+    if settings.AUTOMATION_BEARER_TOKEN and automation_token_credentials and automation_token_credentials.credentials == settings.AUTOMATION_BEARER_TOKEN:
+        # For automation, we might not have a real user in the DB or need a specific one.
+        # This example assumes a default or mock user for automation tasks.
+        # You might need to adjust this based on your automation needs.
+        # Option 1: Fetch a predefined automation user from DB
+        # user = crud_user.get_user_by_email(db, email=settings.AUTOMATION_USER_EMAIL) 
+        # if not user: raise HTTPException(status_code=403, detail="Automation user not found")
+        # return user
+
+        # Option 2: Return a mock/dummy User object if no DB interaction is needed for the call
+        # This is simpler if the endpoint only checks for auth presence and not user details.
+        # Ensure this mock user has necessary attributes if get_current_active_user checks them.
+        print("Authenticated via static automation token.")
+        # Create a dummy user or fetch a specific automation user
+        # This part needs to be adapted to your application's logic for an automation user
+        # For now, let's assume there's an admin user with ID 1 for automation, or create a mock one.
+        user = crud_user.get_user(db, user_id=1) # Example: Get user with ID 1
+        if not user:
+            # Fallback or error if the designated automation user doesn't exist
+            # This is a placeholder. You'll need to decide how to handle this.
+            # For example, create a mock user object if no DB user is appropriate:
+            # class MockUser: is_active = True; is_admin = True; id = 0; email = "automation@example.com"
+            # return MockUser()
+            raise HTTPException(status_code=500, detail="Automation user misconfigured or not found")
+        return user
+
+    # If not an automation token, or if automation token is not set/provided, try JWT
+    if not auth_credentials:
+        # This will be caught if auto_error=True on reusable_oauth2, 
+        # but if we made it optional and no token was provided, raise manually.
+        raise credentials_exception
+
     try:
         token = auth_credentials.credentials # Extract token from credentials
         payload = security.verify_token(token, credentials_exception)

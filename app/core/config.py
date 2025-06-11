@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     BREVO_SENDER_EMAIL: str = "no-reply@referralnetwork.in" # Made non-optional with a default
     BREVO_SENDER_NAME: str = "The Referral Network"   # Made non-optional with a default
 
+    # Static Bearer Token for Automation
+    AUTOMATION_BEARER_TOKEN: Optional[str] = None
+
     class Config:
         env_file = ".env"
         # You can add more environment variables here and they will be loaded from .env
