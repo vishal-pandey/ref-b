@@ -43,6 +43,11 @@ def create_job(db: Session, job: JobPostCreate) -> JobPost:
 
 def update_job(db: Session, db_job: JobPost, job_in: JobPostUpdate) -> JobPost:
     job_data = job_in.model_dump(exclude_unset=True)
+
+    # Convert HttpUrl to string for ApplicationLink if present
+    if 'ApplicationLink' in job_data and job_data['ApplicationLink'] is not None:
+        job_data['ApplicationLink'] = str(job_data['ApplicationLink'])
+
     for key, value in job_data.items():
         setattr(db_job, key, value)
     db.add(db_job)
