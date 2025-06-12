@@ -30,7 +30,8 @@ def read_job_postings(
     RoleName: Optional[str] = None, 
     CompanyName: Optional[str] = None,
     Location: Optional[str] = None,
-    DepartmentName: Optional[str] = None
+    DepartmentName: Optional[str] = None,
+    keyword: Optional[str] = None  # Added keyword parameter
 ):
     """
     Retrieve all job postings, with pagination and search filters. Requires authentication.
@@ -39,7 +40,8 @@ def read_job_postings(
         RoleName=RoleName,
         CompanyName=CompanyName,
         Location=Location,
-        DepartmentName=DepartmentName
+        DepartmentName=DepartmentName,
+        keyword=keyword  # Pass keyword to search params
     )
     jobs = crud.get_jobs(db, skip=skip, limit=limit, search_params=search_params)
     return jobs

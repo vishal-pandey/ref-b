@@ -51,6 +51,7 @@ class JobSearch(BaseModel):
     CompanyName: Optional[str] = None
     Location: Optional[str] = None
     DepartmentName: Optional[str] = None
+    keyword: Optional[str] = Field(None, example="Python Developer") # Generic keyword search
     # Add any other fields you want to be searchable
 
 class SuggestionList(BaseModel):

@@ -1,6 +1,6 @@
 # app/crud/crud_job.py
 from sqlalchemy.orm import Session
-from sqlalchemy import desc
+from sqlalchemy import desc, or_ # Import or_
 import uuid
 from datetime import datetime
 from typing import Optional
@@ -23,6 +23,19 @@ def get_jobs(db: Session, skip: int = 0, limit: int = 100, search_params: Option
             query = query.filter(JobPost.Location.ilike(f"%{search_params.Location}%"))
         if search_params.DepartmentName:
             query = query.filter(JobPost.DepartmentName.ilike(f"%{search_params.DepartmentName}%"))
+        if search_params.keyword:
+            keyword_search = f"%{search_params.keyword}%"
+            query = query.filter(
+                or_(
+                    JobPost.RoleName.ilike(keyword_search),
+                    JobPost.CompanyName.ilike(keyword_search),
+                    JobPost.Location.ilike(keyword_search),
+                    JobPost.DepartmentName.ilike(keyword_search),
+                    JobPost.JobDescription.ilike(keyword_search),
+                    JobPost.ContactEmail.ilike(keyword_search) # Added ContactEmail
+                    # Add other fields you want the generic keyword to search against
+                )
+            )
             
     return query.order_by(desc(JobPost.PostingDate)).offset(skip).limit(limit).all()
 
